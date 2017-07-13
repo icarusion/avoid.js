@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Avoid</title>
+    <style type="text/css">
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        #map{
+            width: 500px;
+            height: 500px;
+            border: 1px solid red;
+            position: relative;
+        }
+        .text{
+            display: inline-block;
+            width: 50px;
+            height: 30px;
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <button onclick="handleAddDom()">Add DOM</button>
+    <button onclick="handleAvoid()">Avoid</button>
+    <script type="text/javascript">
+        function getPositions(elem) {
+            const clientRect = elem.getBoundingClientRect();
+            return [
+                [ clientRect.left, clientRect.left + clientRect.width ],
+                [ clientRect.top, clientRect.top + clientRect.height ]
+            ];
+        }
+
+        function intersect(elemA, elemB) {
+            if (elemA === elemB) return;
+            let posA = getPositions(elemA),
+                posB = getPositions(elemB),
+                isOverlap = false;
+
+            const case1 = posA[0][0] - posB[0][1];
+            const case2 = posA[0][1] - posB[0][0];
+            const case3 = posA[1][0] - posB[1][1];
+            const case4 = posA[1][1] - posB[1][0];
+
+            if ( case1 < 0 && case2 > 0 && case3 < 0 && case4 > 0 ) {
+                isOverlap = true;
+            }
+
+            if (isOverlap) {
+                let caseArr = [
+                    {
+                        value: Math.abs(case1),
+                        index: 1
+                    },
+                    {
+                        value: Math.abs(case2),
+                        index: 2
+                    },
+                    {
+                        value: Math.abs(case3),
+                        index: 3
+                    },
+                    {
+                        value: Math.abs(case4),
+                        index: 4
+                    }
+                ];
+                const reCaseArr = [...caseArr].sort((a, b) => a.value > b.value ? 1 : -1);
+                const minIndex = reCaseArr[0].index;
+                const shift = {
+                    top: 0,
+                    left: 0,
+                    component: 0    // A or B
+                };
+                if (minIndex === 1) {
+                    shift.left = caseArr[0].value;
+                } else if (minIndex === 2) {
+                    shift.left = caseArr[1].value;
+                    shift.component = 1;
+                } else if (minIndex === 3) {
+                    shift.top = caseArr[2].value;
+                } else if (minIndex === 4) {
+                    shift.top = caseArr[3].value;
+                    shift.component = 1;
+                }
+
+                if (shift.component === 0) {
+                    elemA.style.left = (posA[0][0] + shift.left) + 'px';
+                    elemA.style.top = (posA[1][0] + shift.top) + 'px';
+                } else if (shift.component === 1) {
+                    elemB.style.left = (posB[0][0] + shift.left) + 'px';
+                    elemB.style.top = (posB[1][0] + shift.top) + 'px';
+                }
+            }
+
+            return isOverlap;
+        }
+
+        function handleAddDom() {
+            const count = 30;
+            for (let i = 0; i < count; i++) {
+                const dom = document.createElement('span');
+                dom.setAttribute('class', 'text');
+                dom.style.top = Math.floor(Math.random () * 400) + 'px';
+                dom.style.left = Math.floor(Math.random () * 400) + 'px';
+                const rgb = Math.floor(Math.random () * 255) + ',' + Math.floor(Math.random () * 255) + ',' + Math.floor(Math.random () * 255);
+                dom.style.backgroundColor = 'rgb('+ rgb +')';
+                document.getElementById('map').appendChild(dom);
+            }
+        }
+
+        function avoid() {
+            const elements = document.querySelectorAll('.text');
+            for (let i = 0; i < elements.length; i++) {
+                if (i < elements.length - 1) {
+                    for (let j = 0; j < elements.length; j++) {
+                        intersect(elements[i], elements[j]);
+                    }
+                }
+            }
+        }
+
+        function handleAvoid() {
+            const count = 10;
+            for (let i = 0; i < count; i++) {
+                avoid();
+            }
+        }
+    </script>
+</body>
+</html>
